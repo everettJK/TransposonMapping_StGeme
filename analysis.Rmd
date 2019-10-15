@@ -1,0 +1,185 @@
+---
+fontsize: 11pt
+geometry: margin=0.50in
+subparagraph: yes
+title: St. Geme transposon library mapping project
+date: 'October 2019, draft 1'
+author: John K. Everett, Ph.D.
+indent: false
+header-includes:
+   - \usepackage{pdflscape}
+   - \newcommand{\blandscape}{\begin{landscape}}
+   - \newcommand{\elandscape}{\end{landscape}}
+   - \usepackage{pdfpages}
+output:
+  pdf_document:
+    toc: false
+    keep_tex: no
+    latex_engine: xelatex
+---
+```{r echo = FALSE, message=FALSE, warning=FALSE}
+library(knitr)
+library(kableExtra)
+library(RColorBrewer)
+library(tidyverse)
+load('data/analysis.RData')
+ppnum <- function(n) format(n, big.mark = ",", scientific = FALSE, trim = TRUE)
+```
+
+This analysis describes the creation of a sequencing library created from *Kingella kingae* DNA samples provided 
+by the St. Geme research group and the subsequent mapping of identified transpon insertions. A sequencing library 
+was created by shearing genomic DNA and the attachment of adapter sequences followed by a nested PCR 
+where the first set of primers bound within the body of the experimental transposon while the second set 
+of primers bound within the transposon ITR segments. The library was sequenced with the Illumina MiSeq 
+platform and transposon insertions were identified by searching for the 8 terminal ITR nucleotides followed 
+by a TA sequence (CAACCTGTTA). The number of insertions recovered from each sample is shown in Table 1. 
+Sequences were aligned to the representative *Kingella kingae* strain *Vir5453* (NCBI tax id: 1305785).
+
+For the purpose of visualizing the data, the number of recovered insertions were normalized by dividing the 
+number of sites within 10KB genomic blocks by the total number of sites recovered in each sample (Figure 1).  
+
+\vspace{0.5cm}
+
+\small
+Figure 1. Visualization of recovered insertions within *Kingella kingae*.  
+\normalsize
+
+\vspace{0.10cm}
+
+```{r, echo=FALSE, fig.height=4.3}
+genomeInsertionPlot + theme(text = element_text(size=11))
+```
+
+\vspace{0.50cm}
+
+\small
+Table 1. Number of recovered insertions. 
+\normalsize
+
+```{r, echo=FALSE}
+names(sites.tbl) <- c('Sample', 'Insertions')
+sites.tbl$Insertions <- ppnum(sites.tbl$Insertions)
+tab <- bind_cols(sites.tbl[grepl('Control', sites.tbl$Sample),], sites.tbl[grepl('Challenge', sites.tbl$Sample),])
+names(tab) <- c('Sample', 'Insertions', 'Sample', 'Insertions')
+kable(tab, "latex", longtable = T, linesep = "", booktabs = T) %>% kable_styling(position = "center", font_size = 10)
+```
+
+\newpage
+
+The number of insertions within transcription units (TUs) was gauged using two approaches The first 
+approach considered the number of insertions within each TU divided by the total number of insertions 
+recovered in the sample. The second approach considered the total number of inferred cells 
+(unique genomic break points) associated with insertions within each TU divided by the total number 
+of inferred cells in the sample. The site count approach showed a fair degree of variation between techinical 
+replicates (Figure 2) while the abundnce method showed less variation between replicates and averaged samples (Figure 3).  
+
+\vspace{0.5cm}
+
+\small
+Figure 2. Distriubtions of differences between technical replicates and averaged samples using the site count approach. 
+\normalsize
+
+\vspace{0.10cm}
+
+```{r, echo=FALSE, fig.height=3.7}
+d1.result$diffPlot
+```
+
+\vspace{1.2cm}
+
+\small
+Figure 3. Distriubtions of differences between technical replicates and averaged samples using the abundance approach. 
+\normalsize
+
+\vspace{0.10cm}
+
+```{r, echo=FALSE, fig.height=3.7}
+d2.result$diffPlot + labs(y = 'Normalized abundance counts', x = 'Experiment')
+```
+
+\newpage
+
+Using the abundance approach, clear clustering of biological samples was found though there was not remarkable separation 
+between control and challenge samples whithin bioloical sample clusters (Figures 4 & 5). The normalized site count 
+method provided less distinctive clustering (Supp. Figures S1 & S2).
+
+\vspace{0.5cm}
+
+\small
+Figure 4. Principle component analysis of all samples using the in abundance method.
+\normalsize
+
+\vspace{0.10cm}
+
+```{r, echo=FALSE, fig.height=3.7}
+d2.result$PCA
+```
+
+\vspace{1.2cm}
+
+\small
+Figure 5. Principle component analysis of averaged technical replicates using the abundance method.
+\normalsize
+
+\vspace{0.10cm}
+
+```{r, echo=FALSE, fig.height=3.7}
+d2.result$PCA_avg
+```
+
+\newpage
+
+For each transcription unit, t-tests where used to test for differences between control and challenge insertion frequencies. 
+Transcription units with significant uncorrected p-values are shown in Tables 2 & 3. Full gene tables 
+are available on-line via this link.
+
+\vspace{1.0cm}
+
+\small
+Table 2. Genes with significant uncorrected p-values using the abundance correction method.
+\normalsize
+
+```{r, echo = FALSE}
+d2.result$enrichmentTable[which(d2.result$enrichmentTable$nearestFeature == 'GeneID:34399865'),]$geneDesc <-  'glutamate–ammonia ligase]-adenylyl-L-tyrosine phosphorylase...'
+
+kable(subset(select(d2.result$enrichmentTable, nearestFeature, geneDesc,  pVal, pVal.adj, higherInChallenge),  pVal <= 0.05), "latex", longtable = T, linesep = "", booktabs = T) %>% kable_styling(position = "left", font_size = 8)
+```
+
+\vspace{1.0cm}
+
+\small
+Table 3. Genes with significant uncorrected p-values using the normalized site count method.
+\normalsize
+
+```{r, echo = FALSE}
+kable(subset(select(d1.result$enrichmentTable, nearestFeature, geneDesc,  pVal, pVal.adj,higherInChallenge),  pVal <= 0.05), "latex", longtable = T, linesep = "", booktabs = T) %>% kable_styling(position = "left", font_size = 8)
+```
+
+\newpage
+
+**Supplimental**   
+
+
+\small
+Figure S1. Principle component analysis of all samples using the normalized site count method.
+\normalsize
+
+\vspace{0.10cm}
+
+```{r, echo=FALSE, fig.height=3.7}
+d1.result$PCA
+```
+
+\vspace{1.2cm}
+
+\small
+Figure S2. Principle component analysis of averaged technical replicates using the normalized site count method.
+\normalsize
+
+\vspace{0.10cm}
+
+```{r, echo=FALSE, fig.height=3.7}
+d1.result$PCA_avg
+
+
+
