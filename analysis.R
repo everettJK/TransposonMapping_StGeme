@@ -111,3 +111,9 @@ d2.result <- collapseRepsGeneEnrichment(d2)
 
 save.image(file = 'data/analysis.RData')
 
+
+library(xlsx)
+write.xlsx2(d1.result$enrichmentTable, 'siteCountApproachTable.xlsx', col.names = TRUE, row.names = FALSE)
+write.xlsx2(d2.result$enrichmentTable, 'abundanceApproachTable.xlsx', col.names = TRUE, row.names = FALSE)
+
+
