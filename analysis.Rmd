@@ -66,17 +66,17 @@ kable(tab, "latex", longtable = T, linesep = "", booktabs = T) %>% kable_styling
 
 \newpage
 
-The number of insertions within transcription units (TUs) was gauged using two approaches The first 
+The number of insertions within transcription units (TUs) was gauged using two approaches. The first 
 approach considered the number of insertions within each TU divided by the total number of insertions 
 recovered in the sample. The second approach considered the total number of inferred cells 
 (unique genomic break points) associated with insertions within each TU divided by the total number 
 of inferred cells in the sample. The site count approach showed a fair degree of variation between techinical 
-replicates (Figure 2) while the abundnce method showed less variation between replicates and averaged samples (Figure 3).  
+replicates (Figure 2) while the abundance method showed less variation between replicates and averaged samples (Figure 3).  
 
 \vspace{0.5cm}
 
 \small
-Figure 2. Distriubtions of differences between technical replicates and averaged samples using the site count approach. 
+Figure 2. Distriubtions of differences between technical replicate and averaged sample TUs using the site count approach. 
 \normalsize
 
 \vspace{0.10cm}
@@ -88,7 +88,7 @@ d1.result$diffPlot
 \vspace{1.2cm}
 
 \small
-Figure 3. Distriubtions of differences between technical replicates and averaged samples using the abundance approach. 
+Figure 3. Distriubtions of differences between technical replicate and averaged sample TUs using the abundance approach. 
 \normalsize
 
 \vspace{0.10cm}
@@ -100,13 +100,13 @@ d2.result$diffPlot + labs(y = 'Normalized abundance counts', x = 'Experiment')
 \newpage
 
 Using the abundance approach, clear clustering of biological samples was found though there was not remarkable separation 
-between control and challenge samples whithin bioloical sample clusters (Figures 4 & 5). The normalized site count 
-method provided less distinctive clustering (Supp. Figures S1 & S2).
+between control and challenge samples whithin biological sample clusters (Figures 4 & 5). The normalized site count 
+approach provided less distinctive clustering (Supp. Figures S1 & S2).
 
 \vspace{0.5cm}
 
 \small
-Figure 4. Principle component analysis of all samples using the in abundance method.
+Figure 4. Principle component analysis of all samples using the abundance normalization approach.
 \normalsize
 
 \vspace{0.10cm}
@@ -118,7 +118,7 @@ d2.result$PCA
 \vspace{1.2cm}
 
 \small
-Figure 5. Principle component analysis of averaged technical replicates using the abundance method.
+Figure 5. Principle component analysis of averaged technical replicates using the abundance normalization approach.
 \normalsize
 
 \vspace{0.10cm}
@@ -129,9 +129,9 @@ d2.result$PCA_avg
 
 \newpage
 
-For each transcription unit, t-tests where used to test for differences between control and challenge insertion frequencies. 
+For each transcription unit, t-tests were used to test for differences between control and challenge insertion frequencies. 
 Transcription units with significant uncorrected p-values are shown in Tables 2 & 3. Full gene tables 
-are available on-line via this link.
+are available on-line via this [**link**](https://github.com/everettJK/TransposonMapping_StGeme).
 
 \vspace{1.0cm}
 
