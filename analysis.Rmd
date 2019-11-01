@@ -3,7 +3,7 @@ fontsize: 11pt
 geometry: margin=0.50in
 subparagraph: yes
 title: St. Geme transposon library mapping project
-date: 'October 2019, draft 1'
+date: 'November 2019, draft 2'
 author: John K. Everett, Ph.D.
 indent: false
 header-includes:
@@ -33,7 +33,7 @@ where the first set of primers bound within the body of the experimental transpo
 of primers bound within the transposon ITR segments. The library was sequenced with the Illumina MiSeq 
 platform and transposon insertions were identified by searching for the 8 terminal ITR nucleotides followed 
 by a TA sequence (CAACCTGTTA). The number of insertions recovered from each sample is shown in Table 1. 
-Sequences were aligned to the representative *Kingella kingae* strain *Vir5453* (NCBI tax id: 1305785).
+Sequences were aligned to the representative *Kingella kingae* strain *KWG1*.
 
 For the purpose of visualizing the data, the number of recovered insertions were normalized by dividing the 
 number of sites within 10KB genomic blocks by the total number of sites recovered in each sample (Figure 1).  
@@ -130,8 +130,8 @@ d2.result$PCA_avg
 \newpage
 
 For each transcription unit, t-tests were used to test for differences between control and challenge insertion frequencies. 
-Transcription units with significant uncorrected p-values are shown in Tables 2 & 3. Full gene tables 
-are available on-line via this [**link**](https://github.com/everettJK/TransposonMapping_StGeme).
+Transcription units with significant uncorrected p-values are shown in Tables 2 & 3. Gene names followed by 'PRO' represent 
+potential promotor regions 1-50 NTs upstream of genes. Full gene tables are available on-line via this [**link**](https://github.com/everettJK/TransposonMapping_StGeme).
 
 \vspace{1.0cm}
 
@@ -140,7 +140,7 @@ Table 2. Genes with significant uncorrected p-values using the abundance correct
 \normalsize
 
 ```{r, echo = FALSE}
-d2.result$enrichmentTable[which(d2.result$enrichmentTable$nearestFeature == 'GeneID:34399865'),]$geneDesc <-  'glutamate–ammonia ligase]-adenylyl-L-tyrosine phosphorylase...'
+#d2.result$enrichmentTable[which(d2.result$enrichmentTable$nearestFeature == 'GeneID:34399865'),]$geneDesc <-  'glutamate–ammonia ligase]-adenylyl-L-tyrosine phosphorylase...'
 
 kable(subset(select(d2.result$enrichmentTable, nearestFeature, geneDesc,  pVal, pVal.adj, higherInChallenge),  pVal <= 0.05), "latex", longtable = T, linesep = "", booktabs = T) %>% kable_styling(position = "left", font_size = 8)
 ```

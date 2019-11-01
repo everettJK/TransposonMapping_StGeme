@@ -8,7 +8,7 @@ load('data/sites.RData')
 report <- list()
 sites$patient   <- sites$subject
 sites$GTSP      <- sites$sample
-sites$refGenome <- 'Kingella_kingae_Vir5453'
+sites$refGenome <- 'Kingella_kingae_KKKWG1'
 sites$sample2 <- paste0(sites$subject, '.', sites$replicate)
 
 sites <- makeGRangesFromDataFrame(sites, keep.extra.columns = TRUE) %>%

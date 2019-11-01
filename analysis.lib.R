@@ -113,7 +113,7 @@ collapseRepsGeneEnrichment <- function(d){
 
   d.geneEnrcihments$geneDesc <- gsub('\\n\\s*', ' ', sapply(d.geneEnrcihments$nearestFeature, function(x){
     paste0(sapply(unlist(strsplit(as.character(x), ',')), 
-                  function(g) gt23::Kingella_kingae_Vir5453.refSeqGenesGRanges[match(g, gt23::Kingella_kingae_Vir5453.refSeqGenesGRanges$name2),]$name), collapse = ', ')
+                  function(g) gt23::Kingella_kingae_KKKWG1.refSeqGenesGRanges[match(g, gt23::Kingella_kingae_KKKWG1.refSeqGenesGRanges$name2),]$name), collapse = ', ')
   }))
 
   d.geneEnrcihments <- arrange(d.geneEnrcihments, pVal)

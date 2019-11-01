@@ -24,6 +24,7 @@ ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/470/375/GCF_000470375.1_Vir5453/G
 ~/software/bwa/bwa mem -M -t 30 ../data/genome/BWA/GCF_000470375.1_Vir5453 ../data/Undetermined_S0_L001_R1_001.fastq.gz ../data/Undetermined_S0_L001_R2_001.fastq.gz > GCF_000470375.1_Vir5453.sam
 
 
+https://www.ncbi.nlm.nih.gov/genome/3165?genome_assembly_id=259208
 
 
 
