@@ -62,39 +62,48 @@ collapseRepsGeneEnrichment <- function(d){
     labs(x = paste0('PC1 (', sprintf("%.2f", summary(pca)$importance[3,][1] * 100), '%)'),
          y = paste0('PC2 (', sprintf("%.2f", (summary(pca)$importance[3,][2] - summary(pca)$importance[3,][1])  * 100), '%)'))
   
-
-
-  d.experimentDifferences <- bind_rows(lapply(split(d.averagedReps, d.averagedReps$nearestFeature), function(x){
-    tibble('Challenge_1 (avg) vs. Control_1 (avg)' = subset(x, sample == 'Challenge_1')$mean_nSitesNorm - subset(x, sample == 'Control_1')$mean_nSitesNorm,
-           'Challenge_2 (avg) vs. Control_2 (avg)' = subset(x, sample == 'Challenge_2')$mean_nSitesNorm - subset(x, sample == 'Control_2')$mean_nSitesNorm,
-           'Challenge_3 (avg) vs. Control_3 (avg)' = subset(x, sample == 'Challenge_3')$mean_nSitesNorm - subset(x, sample == 'Control_3')$mean_nSitesNorm)
-  })) %>% reshape2::melt()
-
-
-  d.replicateDifferences <- 
-    group_by(d, sample, nearestFeature) %>%
-    arrange(sample) %>%
-    summarise(diff = nSitesNorm[1] - nSitesNorm[2]) %>%
-    ungroup() %>%
-    select(-nearestFeature) %>%
-    rename('variable' = sample, 'value' = diff) %>%
-    mutate(variable = paste0(variable, ' reps diff'))
+  d.replicateDifference <- bind_rows(lapply(split(d, paste(d$sample, d$nearestFeature)), function(x){
+    tibble(sample = x[1,]$sample, diff = x[1,]$nSitesNorm - x[2,]$nSitesNorm)
+  }))
 
   d.differencePlot <- 
-    bind_rows(d.experimentDifferences, d.replicateDifferences) %>%
-    mutate(variable = factor(variable, 
-                             levels = rev(c("Control_1 reps diff", "Challenge_1 reps diff", "Challenge_1 (avg) vs. Control_1 (avg)", 
-                                            "Control_2 reps diff", "Challenge_2 reps diff", "Challenge_2 (avg) vs. Control_2 (avg)", 
-                                            "Control_3 reps diff", "Challenge_3 reps diff", "Challenge_3 (avg) vs. Control_3 (avg)")))) %>%
-    ggplot(aes(variable, (value))) + 
-    geom_boxplot() + 
+    ggplot(mapping = aes(d.replicateDifference$sample, d.replicateDifference$diff)) + 
+    geom_quasirandom(alpha=.2) +
     theme_bw() +
     labs(x = 'Experiment', y = 'Normalized number of insertions') +
     theme(text = element_text(size=13),
           axis.text.x = element_text(angle = 90, hjust = 1)) +
     coord_flip()
 
-  d.geneEnrcihments <- bind_rows(lapply(split(d.averagedReps, as.character(d.averagedReps$nearestFeature)), function(x){
+  
+  getGeneDesc <- function(x){
+    desc <- paste0(sapply(unlist(strsplit(as.character(x), ',')), 
+                    function(g) gt23::Kingella_kingae_KKKWG1.refSeqGenesGRanges[match(g, gt23::Kingella_kingae_KKKWG1.refSeqGenesGRanges$name2),]$name), collapse = ', ')
+    gsub('\\n\\s*', ' ', desc)
+  }
+  
+  
+  d.geneEnrcihments <- bind_rows(lapply(split(d, as.character(d$nearestFeature)), function(x){
+    control   <- x[which(grepl('Control', x$sample)),]$nSitesNorm
+    challenge <- x[-which(grepl('Control', x$sample)),]$nSitesNorm
+    
+    result <- tryCatch({
+      p <- t.test(control, challenge)$p.value
+    },  warning = function(war) {
+      return(p)
+    }, error = function(err) {
+      return(NA)
+    })
+    
+    tibble(nearestFeature = x$nearestFeature[1], 
+           pVal = result,
+           higherInChallenge = ifelse(mean(challenge) > mean(control), TRUE, FALSE),
+           geneDesc = getGeneDesc(nearestFeature))
+  })) %>%  arrange(pVal) %>% mutate(pVal.adj = p.adjust(pVal))
+  
+  
+  
+  d.geneEnrcihments.averagedReps <- bind_rows(lapply(split(d.averagedReps, as.character(d.averagedReps$nearestFeature)), function(x){
     control   <- x[which(grepl('Control', x$sample)),]$mean_nSitesNorm
     challenge <- x[-which(grepl('Control', x$sample)),]$mean_nSitesNorm
   
@@ -107,18 +116,13 @@ collapseRepsGeneEnrichment <- function(d){
     })
   
     tibble(nearestFeature = x$nearestFeature[1], 
-           pVal = result,
-           higherInChallenge = ifelse(mean(challenge) > mean(control), TRUE, FALSE))
-  }))
+           pVal_avgReps = result,
+           higherInChallenge_avgReps = ifelse(mean(challenge) > mean(control), TRUE, FALSE))
+  })) %>% arrange(pVal_avgReps) %>% mutate(pVal.adj_avgReps = p.adjust(pVal_avgReps))
 
-  d.geneEnrcihments$geneDesc <- gsub('\\n\\s*', ' ', sapply(d.geneEnrcihments$nearestFeature, function(x){
-    paste0(sapply(unlist(strsplit(as.character(x), ',')), 
-                  function(g) gt23::Kingella_kingae_KKKWG1.refSeqGenesGRanges[match(g, gt23::Kingella_kingae_KKKWG1.refSeqGenesGRanges$name2),]$name), collapse = ', ')
-  }))
 
-  d.geneEnrcihments <- arrange(d.geneEnrcihments, pVal)
-  d.table <- left_join(d.table, d.geneEnrcihments, by = 'nearestFeature') %>% arrange(pVal)
-  d.table$pVal.adj <- p.adjust(d.table$pVal)
+  d.table <- left_join(d.table, d.geneEnrcihments, by = 'nearestFeature') 
+  d.table <- left_join(d.table, d.geneEnrcihments.averagedReps, by = 'nearestFeature') 
   
   return(list(diffPlot = d.differencePlot, enrichmentTable = d.table, PCA = PCA_plot, PCA_avg = PCA_plot_reps_averaged))
 }

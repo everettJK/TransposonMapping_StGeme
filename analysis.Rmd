@@ -3,14 +3,9 @@ fontsize: 11pt
 geometry: margin=0.50in
 subparagraph: yes
 title: St. Geme transposon library mapping project
-date: 'November 2019, draft 2'
+date: 'November 2019, draft 3'
 author: John K. Everett, Ph.D.
 indent: false
-header-includes:
-   - \usepackage{pdflscape}
-   - \newcommand{\blandscape}{\begin{landscape}}
-   - \newcommand{\elandscape}{\end{landscape}}
-   - \usepackage{pdfpages}
 output:
   pdf_document:
     toc: false
@@ -27,13 +22,13 @@ ppnum <- function(n) format(n, big.mark = ",", scientific = FALSE, trim = TRUE)
 ```
 
 This analysis describes the creation of a sequencing library created from *Kingella kingae* DNA samples provided 
-by the St. Geme research group and the subsequent mapping of identified transpon insertions. A sequencing library 
-was created by shearing genomic DNA and the attachment of adapter sequences followed by a nested PCR 
+by the St. Geme research group and the subsequent mapping of identified transpon insertions. The sequencing library 
+was created by shearing genomic DNA and the subsequent ligation of adapter sequences followed by a nested PCR 
 where the first set of primers bound within the body of the experimental transposon while the second set 
 of primers bound within the transposon ITR segments. The library was sequenced with the Illumina MiSeq 
 platform and transposon insertions were identified by searching for the 8 terminal ITR nucleotides followed 
 by a TA sequence (CAACCTGTTA). The number of insertions recovered from each sample is shown in Table 1. 
-Sequences were aligned to the representative *Kingella kingae* strain *KWG1*.
+Sequences were aligned to the *Kingella kingae* strain *KWG1*. `r sprintf("%.1f%%", nrow(subset(sites, strand == '*')) / nrow(sites) * 100)` of insertions were detected by sequencing out of both ITRs. Insertions identified via a single ITR were typically from less abundant clones compared to the dually detected insertions.
 
 For the purpose of visualizing the data, the number of recovered insertions were normalized by dividing the 
 number of sites within 10KB genomic blocks by the total number of sites recovered in each sample (Figure 1).  
@@ -46,7 +41,7 @@ Figure 1. Visualization of recovered insertions within *Kingella kingae*.
 
 \vspace{0.10cm}
 
-```{r, echo=FALSE, fig.height=4.3}
+```{r, echo=FALSE, fig.height=3.5}
 genomeInsertionPlot + theme(text = element_text(size=11))
 ```
 
@@ -76,24 +71,24 @@ replicates (Figure 2) while the abundance method showed less variation between r
 \vspace{0.5cm}
 
 \small
-Figure 2. Distriubtions of differences between technical replicate and averaged sample TUs using the site count approach. 
+Figure 2. Distriubtions of differences between technical replicate insertion counts within TUs using the site count normalization approach. 
 \normalsize
 
 \vspace{0.10cm}
 
-```{r, echo=FALSE, fig.height=3.7}
+```{r, echo=FALSE, fig.height=3}
 d1.result$diffPlot
 ```
 
 \vspace{1.2cm}
 
 \small
-Figure 3. Distriubtions of differences between technical replicate and averaged sample TUs using the abundance approach. 
+Figure 3. Distriubtions of differences between technical replicate insertion counts within TUs using the abundance normalization approach. 
 \normalsize
 
 \vspace{0.10cm}
 
-```{r, echo=FALSE, fig.height=3.7}
+```{r, echo=FALSE, fig.height=3}
 d2.result$diffPlot + labs(y = 'Normalized abundance counts', x = 'Experiment')
 ```
 
@@ -129,31 +124,138 @@ d2.result$PCA_avg
 
 \newpage
 
-For each transcription unit, t-tests were used to test for differences between control and challenge insertion frequencies. 
-Transcription units with significant uncorrected p-values are shown in Tables 2 & 3. Gene names followed by 'PRO' represent 
-potential promotor regions 1-50 NTs upstream of genes. Full gene tables are available on-line via this [**link**](https://github.com/everettJK/TransposonMapping_StGeme).
+For each transcription unit, t-tests were used to test for differences between control and challenge 
+insertion frequencies. Transcription units with significant uncorrected p-values are shown in Tables 2 & 3. 
+Gene names followed by 'PRO' represent potential promoter regions 1-50 NTs upstream of genes. 
+Full gene tables are available on-line via this [**link**](https://github.com/everettJK/TransposonMapping_StGeme).
 
-\vspace{1.0cm}
+\vspace{0.25cm}
 
 \small
-Table 2. Genes with significant uncorrected p-values using the abundance correction method.
+Table 2a. Genes with significant uncorrected p-values using the **abundance correction method**.
 \normalsize
 
 ```{r, echo = FALSE}
-#d2.result$enrichmentTable[which(d2.result$enrichmentTable$nearestFeature == 'GeneID:34399865'),]$geneDesc <-  'glutamate–ammonia ligase]-adenylyl-L-tyrosine phosphorylase...'
+tab1 <- subset(d2.result$enrichmentTable,  pVal <= 0.05) %>% arrange(pVal)
+tab1$nearestFeature <- gsub('KKKWG1_', '', tab1$nearestFeature)
+tab2 <- select(tab1, nearestFeature, geneDesc,  pVal, pVal.adj, higherInChallenge) %>% arrange(pVal)
 
-kable(subset(select(d2.result$enrichmentTable, nearestFeature, geneDesc,  pVal, pVal.adj, higherInChallenge),  pVal <= 0.05), "latex", longtable = T, linesep = "", booktabs = T) %>% kable_styling(position = "left", font_size = 8)
+kable(tab2, "latex", linesep = "", booktabs = T) %>% kable_styling(position = "left", font_size = 9)
 ```
 
-\vspace{1.0cm}
+\newpage
+
+```{r, echo = FALSE, message = FALSE, fig.height = 8}
+o <- reshape2::melt(select(tab1, -pVal, -higherInChallenge, -geneDesc, -pVal.adj, -pVal_avgReps, -higherInChallenge_avgReps, -pVal.adj_avgReps))
+o$nearestFeature <- factor(as.character(o$nearestFeature), levels = rev(tab2$nearestFeature))
+o$variable <- factor(as.character(o$variable), levels = rev(unique(o$variable)))
+ggplot(o, aes(variable, nearestFeature, fill = log10(value))) + 
+  geom_tile() +
+  theme(text = element_text(size=10), axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(x = '', y = '') +
+  scale_fill_gradient(name = 'log10(normalized counts)', low = "lightskyblue1", high = "blue3", space = "Lab", na.value = "grey80")
+```
+
+\newpage
 
 \small
-Table 3. Genes with significant uncorrected p-values using the normalized site count method.
+Table 2b. Genes with significant uncorrected p-values using the **abundance correction method** where replicates have been averaged.
 \normalsize
 
 ```{r, echo = FALSE}
-kable(subset(select(d1.result$enrichmentTable, nearestFeature, geneDesc,  pVal, pVal.adj,higherInChallenge),  pVal <= 0.05), "latex", longtable = T, linesep = "", booktabs = T) %>% kable_styling(position = "left", font_size = 8)
+tab1 <- subset(d2.result$enrichmentTable,  pVal_avgReps <= 0.05) %>% arrange(pVal_avgReps)
+tab1$nearestFeature <- gsub('KKKWG1_', '', tab1$nearestFeature)
+tab1[27,]$nearestFeature <- 'RS07520 PRO'
+tab1[27,]$geneDesc <- 'long-chain-fatty-acid--CoA ligase'
+
+tab2 <- select(tab1, nearestFeature, geneDesc, pVal_avgReps, pVal.adj_avgReps, higherInChallenge_avgReps) %>% arrange(pVal_avgReps)
+
+kable(tab2, "latex", linesep = "", booktabs = T) %>% kable_styling(position = "left", font_size = 7)
 ```
+
+\newpage
+
+```{r, echo = FALSE, message = FALSE, fig.height = 8}
+o <- select(tab1, -pVal, -higherInChallenge, -geneDesc, -pVal.adj, -pVal_avgReps, -higherInChallenge_avgReps, -pVal.adj_avgReps)
+o <- reshape2::melt(o)
+o$sample <- sub('\\.\\d$', '', o$variable)
+o <- group_by(o, sample, nearestFeature) %>%
+     summarise(mean_nSitesNorm = mean(value)) %>%
+     ungroup()
+
+o$nearestFeature <- factor(as.character(o$nearestFeature), levels = rev(tab2$nearestFeature))
+o$sample <- factor(as.character(o$sample), levels = rev(unique(o$sample)))
+
+ggplot(o, aes(sample, nearestFeature, fill = log10(mean_nSitesNorm))) + 
+  geom_tile() +
+  theme(text = element_text(size=10), axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(x = '', y = '') +
+  scale_fill_gradient(name = 'log10(normalized counts)', low = "lightskyblue1", high = "blue3", space = "Lab", na.value = "grey80")
+```
+
+\newpage
+
+\small
+Table 3a. Genes with significant uncorrected p-values using the **site count correction method**.
+\normalsize
+
+```{r, echo = FALSE}
+tab1 <- subset(d1.result$enrichmentTable,  pVal <= 0.05) %>% arrange(pVal)
+tab1$nearestFeature <- gsub('KKKWG1_', '', tab1$nearestFeature)
+tab2 <- select(tab1, nearestFeature, geneDesc,  pVal, pVal.adj, higherInChallenge) %>% arrange(pVal)
+
+kable(tab2, "latex", linesep = "", booktabs = T) %>% kable_styling(position = "left", font_size = 8)
+```
+
+\newpage
+
+```{r, echo = FALSE, message = FALSE, fig.height = 8}
+o <- reshape2::melt(select(tab1, -pVal, -higherInChallenge, -geneDesc, -pVal.adj, -pVal_avgReps, -higherInChallenge_avgReps, -pVal.adj_avgReps))
+o$nearestFeature <- factor(as.character(o$nearestFeature), levels = rev(tab2$nearestFeature))
+o$variable <- factor(as.character(o$variable), levels = rev(unique(o$variable)))
+ggplot(o, aes(variable, nearestFeature, fill = log10(value))) + 
+  geom_tile() +
+  theme(text = element_text(size=10), axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(x = '', y = '') +
+  scale_fill_gradient(name = 'log10(normalized counts)', low = "lightskyblue1", high = "blue3", space = "Lab", na.value = "grey80")
+```
+
+\newpage
+
+
+\small
+Table 3b. Genes with significant uncorrected p-values using the **site count correction method** where replicates have been averaged.
+\normalsize
+
+```{r, echo = FALSE}
+tab1 <- subset(d1.result$enrichmentTable,  pVal_avgReps <= 0.05) %>% arrange(pVal_avgReps)
+tab1$nearestFeature <- gsub('KKKWG1_', '', tab1$nearestFeature)
+
+tab2 <- select(tab1, nearestFeature, geneDesc, pVal_avgReps, pVal.adj_avgReps, higherInChallenge_avgReps) %>% arrange(pVal_avgReps)
+
+kable(tab2, "latex", linesep = "", booktabs = T) %>% kable_styling(position = "left", font_size = 6)
+```
+
+\newpage
+
+```{r, echo = FALSE, message = FALSE, fig.height = 8}
+o <- select(tab1, -pVal, -higherInChallenge, -geneDesc, -pVal.adj, -pVal_avgReps, -higherInChallenge_avgReps, -pVal.adj_avgReps)
+o <- reshape2::melt(o)
+o$sample <- sub('\\.\\d$', '', o$variable)
+o <- group_by(o, sample, nearestFeature) %>%
+     summarise(mean_nSitesNorm = mean(value)) %>%
+     ungroup()
+
+o$nearestFeature <- factor(as.character(o$nearestFeature), levels = rev(tab2$nearestFeature))
+o$sample <- factor(as.character(o$sample), levels = rev(unique(o$sample)))
+
+ggplot(o, aes(sample, nearestFeature, fill = log10(mean_nSitesNorm))) + 
+  geom_tile() +
+  theme(text = element_text(size=10), axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(x = '', y = '') +
+  scale_fill_gradient(name = 'log10(normalized counts)', low = "lightskyblue1", high = "blue3", space = "Lab", na.value = "grey80")
+```
+
 
 \newpage
 
